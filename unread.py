@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # email-notifier is the command line tool to check unread mail via IMAP.
-# i am using imaplib to access email via imap.
-# 
+# I am using imaplib to access email via imap.
+#
 # Copyright (C) 2008  Abhishek Patil <abhishek@thezeroth.net>.
 #
 # email-notifier is free software: you can redistribute it and/or modify
@@ -21,29 +21,27 @@
 
 import imaplib, sys, ConfigParser, getpass
 
-
 SERVER = ""
 PORT = ""
 mailbox =""
-
 SSL = ""
+
 def read_confi():
     """
-    This function reads the notifier.conf file and assign the 
+    This function reads the notifier.conf file and assign the
     values to SERVER PORT SSL
     TODO:
         make pop3 available
-    
     """
     global SERVER,PORT,SSL
     config = ConfigParser.ConfigParser()
     config.read('notifier.conf')
     SERVER = config.get('imap','server') #url for imap server eg. imap.gmail.com
-    print SERVER
+    #print SERVER
     PORT = config.getint('imap','port') #Port number of imap server
-    print PORT
+    #print PORT
     SSL = config.getboolean('imap','ssl') # whether to use SSL encryption or not.
-    print SSL
+    #print SSL
 
 def login(user, password):
     """
@@ -51,26 +49,28 @@ def login(user, password):
     by command line.
     """
     global mailbox, SERVER, PORT, SSL
+
     if SSL:
         mailbox = imaplib.IMAP4_SSL(host = SERVER, port = PORT)
     else:
         mailbox = imaplib.IMAP4(host = SERVER, port = PORT)
-    
+
     try:
-        print mailbox.login(user,password)
+        mailbox.login(user,password)
     except:
         print "Error in Login Please Try correct username & password or check your Internet connection"
         sys.exit(1)
 
 def check_unread():
     """
-    This function select INBOX as a default folder and check of the unread mails 
+    This function select INBOX as a default folder and check of the unread mails
     and displays the number of unread emails are available.
     """
     global mailbox
-    print mailbox.select()
+
+    mailbox.select()
     if len(mailbox.search(None,"UNSEEN")[1]) >= 1:
-        print mailbox.search(None,"UNSEEN")[1]
+        mailbox.search(None,"UNSEEN")[1]
         print "there is/are %d email/s" % len(mailbox.search(None,"UNSEEN")[1][0].split())
     else:
         print " there are no UNREAD Messages"
@@ -82,6 +82,7 @@ def fetch_mail(mail_uid):
     FROM TO CC DATE & SUBJECT of the each unread mail.
     """
     global mailbox
+
     for uid in mail_uid[0].split():
         typ, data = mailbox.fetch(uid,'(BODY[HEADER.FIELDS (FROM TO CC DATE SUBJECT)])')
         sub = data[0][1].strip()
@@ -93,9 +94,10 @@ def logout():
     This function logout from the session.
     """
     global mailbox
+
     mailbox.logout()
 
-        
+
 if __name__ == '__main__':
     """
     TODO: use proper exception.
@@ -104,16 +106,13 @@ if __name__ == '__main__':
         user = sys.argv[1]
     else:
         user = raw_input("Please Enter Your Username: ")
-    
+
     psw = getpass.getpass("Please Enter Password: ")
     read_confi()
     login(user,psw)
-    print " login"
-    
-        
     fetch_mail(check_unread())
     logout()
-    
 
-    
+
+
 
