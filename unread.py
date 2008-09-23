@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-# unread is the command line tool to check unread mail via IMAP.
+# email-notifier is the command line tool to check unread mail via IMAP.
 # we are using imaplib to access a imap email.
 # 
 # Copyright (C) 2008  Abhishek Patil <abhishek@thezeroth.net>.
 #
-# unread is free software: you can redistribute it and/or modify
+# email-notifier is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# unread is distributed in the hope that it will be useful,
+# email-notifier is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -19,31 +19,54 @@
 
 
 
-import imaplib, sys
+import imaplib, sys, ConfigParser, getpass
 
-#time being we are using gmail imap server 
-SERVER = 'imap.gmail.com'
-PORT = 993
-mailbox = imaplib.IMAP4_SSL(SERVER,PORT)
+
+SERVER = ""
+PORT = ""
+mailbox =""
+
+SSL = ""
+def read_confi():
+    global SERVER,PORT,SSL
+    config = ConfigParser.ConfigParser()
+    config.read('notifier.conf')
+    SERVER = config.get('imap','server') #url for imap server eg. imap.gmail.com
+    print SERVER
+    PORT = config.getint('imap','port') #Port number of imap server
+    print PORT
+    SSL = config.getboolean('imap','ssl') # whether to use SSL encryption or not.
+    print SSL
 
 def login(user, password):
     """
     This function login to the user account using give username and password.
     by command line.
     """
-    print mailbox.login(user,password)
+    global mailbox, SERVER, PORT, SSL
+    if SSL:
+        mailbox = imaplib.IMAP4_SSL(host = SERVER, port = PORT)
+    else:
+        mailbox = imaplib.IMAP4(host = SERVER, port = PORT)
+    
+    try:
+        print mailbox.login(user,password)
+    except:
+        print "Error in Login Please Try correct username & password or check your Internet connection"
+        sys.exit(1)
 
 def check_unread():
     """
     This function select INBOX as a default folder and check of the unread mails 
     and displays the number of unread emails are available.
     """
+    global mailbox
     print mailbox.select()
     if len(mailbox.search(None,"UNSEEN")[1]) >= 1:
         print mailbox.search(None,"UNSEEN")[1]
         print "there is/are %d email/s" % len(mailbox.search(None,"UNSEEN")[1][0].split())
     else:
-        print " there are no UNREAD Messagees"
+        print " there are no UNREAD Messages"
     return mailbox.search(None,"UNSEEN")[1]
 
 def fetch_mail(mail_uid):
@@ -51,6 +74,7 @@ def fetch_mail(mail_uid):
     This function reads each unread mails and displays
     FROM TO CC DATE & SUBJECT of the each unread mail.
     """
+    global mailbox
     for uid in mail_uid[0].split():
         typ, data = mailbox.fetch(uid,'(BODY[HEADER.FIELDS (FROM TO CC DATE SUBJECT)])')
         sub = data[0][1].strip()
@@ -61,17 +85,25 @@ def logout():
     """
     This function logout from the session.
     """
+    global mailbox
     mailbox.logout()
 
         
 if __name__ == '__main__':
     """
-    TODO: impliment the command line parser getopt.
+    TODO: use proper exception.
     """
-    try:
-        login(sys.argv[1],sys.argv[2])
-    except:
-        print "Login Problem : Please try the correct user name and password"
+    if len(sys.argv)> 1:
+        user = sys.argv[1]
+    else:
+        user = raw_input("Please Enter Your Username: ")
+    
+    psw = getpass.getpass("Please Enter Password: ")
+    read_confi()
+    login(user,psw)
+    print " login"
+    
+        
     fetch_mail(check_unread())
     logout()
     
