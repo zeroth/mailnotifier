@@ -1,0 +1,8 @@
+Email-notifier is a tool developed to check new arrivals of email
+in your mailbox via IMAP connection.
+
+This is a command line tool.
+
+By using Email-notifier you no longer need to keep open your mail client or browser just 
+to check whether there is a new mail or not. now u can do it directly from your terminal 
+while working.

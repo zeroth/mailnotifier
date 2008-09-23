@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # email-notifier is the command line tool to check unread mail via IMAP.
-# we are using imaplib to access a imap email.
+# i am using imaplib to access email via imap.
 # 
 # Copyright (C) 2008  Abhishek Patil <abhishek@thezeroth.net>.
 #
@@ -28,6 +28,13 @@ mailbox =""
 
 SSL = ""
 def read_confi():
+    """
+    This function reads the notifier.conf file and assign the 
+    values to SERVER PORT SSL
+    TODO:
+        make pop3 available
+    
+    """
     global SERVER,PORT,SSL
     config = ConfigParser.ConfigParser()
     config.read('notifier.conf')
