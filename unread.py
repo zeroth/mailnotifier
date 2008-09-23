@@ -19,7 +19,7 @@
 
 
 
-import imaplib, sys, ConfigParser, getpass
+import imaplib, sys, ConfigParser, getpass, os.path
 
 SERVER = ""
 PORT = ""
@@ -35,7 +35,8 @@ def read_confi():
     """
     global SERVER,PORT,SSL
     config = ConfigParser.ConfigParser()
-    config.read('notifier.conf')
+    notifier_file = os.path.join(os.getcwd(), os.path.dirname(__file__)) + "/notifier.conf" #gives the current path
+    config.read(notifier_file)
     SERVER = config.get('imap','server') #url for imap server eg. imap.gmail.com
     #print SERVER
     PORT = config.getint('imap','port') #Port number of imap server
