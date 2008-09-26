@@ -35,7 +35,7 @@ def read_confi():
     """
     global SERVER,PORT,SSL
     config = ConfigParser.ConfigParser()
-    notifier_file = os.path.join(os.getcwd(), os.path.dirname(__file__)) + "/notifier.conf" #gives the current path
+    notifier_file = os.path.join(os.getcwd(), os.path.dirname(__file__)) + "/notifier_manual.conf" #gives the current path
     config.read(notifier_file)
     SERVER = config.get('imap','server') #url for imap server eg. imap.gmail.com
     #print SERVER
@@ -95,14 +95,47 @@ def logout():
     This function logout from the session.
     """
     global mailbox
-
     mailbox.logout()
+    
 
+def manual_login(user):
+    """
+    when useing maual mode user have to send a user name as commandline argument
+    with option -m <username>
+    """
+    psw = getpass.getpass("Please Enter Password: ")
+    read_confi()
+    login(user,psw)
+    fetch_mail(check_unread())
+    logout()
+
+def auto_login():
+    """
+    read the notifier_auto.conf file, config file format would be
+    [<name/tag for the accout>]
+    server = <imap server>
+    port = <imap server port>
+    ssl = <True/False> # use ssl incription or not
+    userid = <username>
+    password = <password>
+    """
+    
+def argv_parser():
+    decision =""
+    options, remainder = getopt.getopt(sys.argv[1:],'a:m',['auto','manual=']
+    
+    for opt, arg in options:
+        if opt in ('-a','--auto'):
+            auto_login()
+        elif opt in ('-m','--manual'):
+            manual_login(arg)
 
 if __name__ == '__main__':
     """
     TODO: use proper exception.
     """
+    argv_parser()
+    
     if len(sys.argv)> 1:
         user = sys.argv[1]
     else:
