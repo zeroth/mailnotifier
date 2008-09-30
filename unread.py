@@ -19,42 +19,22 @@
 
 
 
-import imaplib, sys, ConfigParser, getpass, os.path
+import imaplib, sys, ConfigParser, getpass, os.path, getopt
 
-SERVER = ""
-PORT = ""
 mailbox =""
-SSL = ""
 
-def read_confi():
-    """
-    This function reads the notifier.conf file and assign the
-    values to SERVER PORT SSL
-    TODO:
-        make pop3 available
-    """
-    global SERVER,PORT,SSL
-    config = ConfigParser.ConfigParser()
-    notifier_file = os.path.join(os.getcwd(), os.path.dirname(__file__)) + "/notifier_manual.conf" #gives the current path
-    config.read(notifier_file)
-    SERVER = config.get('imap','server') #url for imap server eg. imap.gmail.com
-    #print SERVER
-    PORT = config.getint('imap','port') #Port number of imap server
-    #print PORT
-    SSL = config.getboolean('imap','ssl') # whether to use SSL encryption or not.
-    #print SSL
-
-def login(user, password):
+def login(user, password,ssl,server,port):
     """
     This function login to the user account using give username and password.
     by command line.
     """
-    global mailbox, SERVER, PORT, SSL
-
-    if SSL:
-        mailbox = imaplib.IMAP4_SSL(host = SERVER, port = PORT)
+    global mailbox
+#    print user, password, ssl, server, port
+    if ssl:
+        mailbox = imaplib.IMAP4_SSL(host = server, port = port)
+        
     else:
-        mailbox = imaplib.IMAP4(host = SERVER, port = PORT)
+        mailbox = imaplib.IMAP4(host = server, port = port)
 
     try:
         mailbox.login(user,password)
@@ -98,14 +78,25 @@ def logout():
     mailbox.logout()
     
 
-def manual_login(user):
+def manual_login():
     """
     when useing maual mode user have to send a user name as commandline argument
     with option -m <username>
     """
+    config = ConfigParser.ConfigParser()
+    notifier_file = os.path.join(os.getcwd(), os.path.dirname(__file__)) + "notifier_manual.conf" #gives the current path
+    config.read(notifier_file)
+    server = config.get('imap','server') #url for imap server eg. imap.gmail.com
+    #print SERVER
+    port = config.getint('imap','port') #Port number of imap server
+    #print PORT
+    ssl = config.getboolean('imap','ssl') # whether to use SSL encryption or not.
+    #print SSL
+    
+    user = raw_input("Please Enter Your Username: ")
     psw = getpass.getpass("Please Enter Password: ")
-    read_confi()
-    login(user,psw)
+    
+    login(user,psw,ssl, server, port)
     fetch_mail(check_unread())
     logout()
 
@@ -119,34 +110,39 @@ def auto_login():
     userid = <username>
     password = <password>
     """
+    config_auto = ConfigParser.ConfigParser()
+    
+    config_auto.read( os.path.join(os.getcwd(), os.path.dirname(__file__)) + "notifier_auto.conf")
+    ac_list = config_auto.sections()
+    total_ac = len(ac_list)
+    
+    for ac in ac_list:
+        print ac
+        userid = config_auto.get(ac,'userid')
+        password = config_auto.get(ac,'password')
+        ssl = config_auto.getboolean(ac,'ssl')
+        server = config_auto.get(ac,'server')
+        port = config_auto.getint(ac,'port')
+        login(userid,password,ssl,server,port)
+        fetch_mail(check_unread())
+        logout()
+        print"------------------------"
+        
+    
     
 def argv_parser():
     decision =""
-    options, remainder = getopt.getopt(sys.argv[1:],'a:m',['auto','manual=']
-    
+    options, remainder = getopt.getopt(sys.argv[1:],'m,a',['manual','auto'])
     for opt, arg in options:
         if opt in ('-a','--auto'):
             auto_login()
         elif opt in ('-m','--manual'):
-            manual_login(arg)
+            manual_login()
 
 if __name__ == '__main__':
     """
-    TODO: use proper exception.
+    TODO: # use proper exception.
+          # create a common function for  manual_login and auto_login to read conf file
     """
     argv_parser()
-    
-    if len(sys.argv)> 1:
-        user = sys.argv[1]
-    else:
-        user = raw_input("Please Enter Your Username: ")
-
-    psw = getpass.getpass("Please Enter Password: ")
-    read_confi()
-    login(user,psw)
-    fetch_mail(check_unread())
-    logout()
-
-
-
 
